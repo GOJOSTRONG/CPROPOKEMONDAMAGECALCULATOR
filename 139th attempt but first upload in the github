@@ -1,0 +1,292 @@
+#include <iostream>// main library cout cin
+#include <windows.h>// clear screen && font color, reference:https://stackoverflow.com/questions/30645675/how-to-change-colour-of-a-specific-output-on-console-in-c++
+#include <cstdlib>// randomizer
+using namespace std;// ky tamad ko mag std:: you dont need to prefix standard library identifiers like cin, cout, endl, etc., with std::.
+
+const int NUM_TYPES = 15;// constant value it wont be changed if needs changes in the 2d array
+const string typeNames[NUM_TYPES] = {"NORMAL", "FIRE", "WATER", "ELECTRIC", "GRASS", "ICE", "FIGHTING", "POISON", "GROUND", "FLYING", "PSYCHIC", "BUG", "ROCK", "GHOST", "DRAGON"};
+void setColor(int color) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);// font color executer it means that in every line the color will change depends on color code and the default value is 7
+}
+
+double calculateDamage(int level, double movePower, double attackerAttack, double foeDefense, double STAB, double type1, double type2, double critical, bool selfDestruct) {// declaration of datatypes in the formulas
+    double randomFactor = (rand() % 39 + 217) / 255.0;// random number generator from 0.85 to 1
+    double damage;// declaration of data type of the formula's variable
+
+    if (selfDestruct) {// if the user uses self destruct it will doubles the move power and half the defense unless the defense is not equal to 1
+        movePower *= 2.0;
+        if (foeDefense / 2.0 > 1.0) {
+            foeDefense /= 2.0;
+        } else {
+            foeDefense = 1.0;
+        }
+        damage = ((((((2 * level * critical / 5) + 2) * movePower * (attackerAttack / foeDefense)) / 50) + 2) * STAB * type1 * type2 * randomFactor);// self destruct damage formula
+        cout << "Both Pokemon faint due to the self-destruct move." << endl;
+    } else {
+        damage = ((((((2 * level * critical / 5) + 2) * movePower * (attackerAttack / foeDefense)) / 50) + 2) * STAB * type1 * type2 * randomFactor); // normal damage calculator
+    }
+
+    return damage;// formulas variable
+}
+    double effectiveness[NUM_TYPES][NUM_TYPES] = { // 2d array imagine that it is x and y position the move power depends what value do they intersects at
+        // NOR  FIR  WAT  ELE  GRA  ICE  FIG  POI  GRO  FLY  PSY  BUG  ROC  GHO  DRA
+        {1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 0.5, 0, 1},   // NORMAL
+        {1, 0.5, 0.5, 1, 2, 2, 1, 1, 1, 1, 1, 2, 0.5, 1, 0.5}, // FIRE
+        {1, 2, 0.5, 1, 0.5, 1, 1, 1, 2, 1, 1, 1, 2, 1, 0.5}, // WATER
+        {1, 1, 2, 0.5, 0.5, 1, 1, 1, 0, 2, 1, 1, 1, 1, 0.5}, // ELECTRIC
+        {1, 0.5, 2, 1, 0.5, 1, 1, 0.5, 2, 0.5, 1, 0.5, 2, 1, 0.5}, // GRASS
+        {1, 0.5, 0.5, 1, 2, 0.5, 1, 1, 2, 2, 1, 1, 1, 1, 2}, // ICE
+        {2, 1, 1, 1, 1, 2, 1, 0.5, 1, 0.5, 0.5, 0.5, 2, 0, 1}, // FIGHTING
+        {1, 1, 1, 1, 2, 1, 1, 0.5, 0.5, 1, 1, 1, 0.5, 0.5, 1}, // POISON
+        {1, 2, 1, 2, 0.5, 1, 1, 2, 1, 0, 1, 0.5, 2, 1, 1}, // GROUND
+        {1, 1, 1, 0.5, 2, 1, 2, 1, 1, 1, 1, 2, 0.5, 1, 1}, // FLYING
+        {1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 0.5, 1, 1, 1, 1}, // PSYCHIC
+        {1, 0.5, 1, 1, 2, 1, 0.5, 0.5, 1, 0.5, 2, 1, 1, 0.5, 1}, // BUG
+        {1, 2, 1, 1, 1, 2, 0.5, 1, 0.5, 2, 1, 2, 1, 1, 1}, // ROCK
+        {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 1}, // GHOST
+        {1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2} // DRAGON
+    };
+   void dataType(int level, int attackerType1, int attackerType2, int moveType, double movePower, double attackerAttack, double critical, int enemyType1, int enemyType2, double foeDefense, string effectivenessMsg, bool selfDestruct){
+// function declaration of data types that will be uses below. NOTE it uses void function because we dont need to return in anything because there will be strings that will be executed
+    double STAB = (attackerType1 == enemyType1 || attackerType1 == enemyType2 || attackerType2 == enemyType1 || attackerType2 == enemyType2) ? 1.5 : 1.0;// this is called "conditional ternary operator" the same as if else statement but more shortcut so that we can save time on typing this code anyways ill still provide the code if we use if-else condition
+    /*double STAB;
+    if (attackerType1 == enemyType1 || attackerType1 == enemyType2 || attackerType2 == enemyType1 || attackerType2 == enemyType2) {
+    STAB = 1.5;
+   } else {
+      STAB = 1.0;
+     }*/ // see thats what I mean
+    double type1 = effectiveness[moveType][enemyType1]; // this calls the 2d array above and it will depends on what user's put to the move type and enemy type1 they will put it maybe 0, 0.5, 1, or 2
+    double type2 = (enemyType2 == -1) ? 1.0 : effectiveness[moveType][enemyType2];//conditional ternary operator that means if -1 it one type pokemon and if not it will pick in 2d array which is (from 0 to 14) as for the type2 the same as the above if-else statement makes if but for you ill make the time taking one lakas mo sakin eii ikaw pa ba hahaha
+    /* double type2;
+    if ( enemytype2 == -1){
+    enemytype2 = 1}
+    else {type2= effectiveness[moveType][enemyType2]
+    }*/
+
+    double damage = calculateDamage(level, movePower, attackerAttack, foeDefense, STAB, type1, type2, critical, selfDestruct);// declaration of damage user-input data types
+
+    cout << "Damage: " << damage << endl;// damage condition when it is normal vs ghost type and selfdestruct vs ghost type
+
+     if (selfDestruct && moveType == 0 && (enemyType1 == 13 || enemyType2 == 13)) {// logical operations "&&" means "and" and "||" means "or" just like the proposition topic in discrete math
+        cout << "The move has no effect against Ghost-type Pokemon." << endl;// see
+    }
+
+    cout << "Effectiveness against enemy types:" << endl;// just an indicator from the 2d array logical orders
+    for (int i = 0; i < NUM_TYPES; ++i) {
+        cout << typeNames[i] << ": ";
+        if (effectiveness[moveType][i] == 0.0) {
+            cout << "No effect" << endl;// normal against ghost && self-destruct against ghost
+        } else if (effectiveness[moveType][i] == 0.5) {
+            cout << "Not very effective" << endl; // fire vs water and etc check the 2d array
+        } else if (effectiveness[moveType][i] == 1.0) {
+            cout << "Normal effectiveness" << endl;// normal vs fire and etc check the 2d array
+        } else if (effectiveness[moveType][i] == 2.0) {
+            cout << "Super effective" << endl;// water vs fire and etc check the 2d array
+        }
+    }
+}
+
+int main() {// finally the main function where all user input conditions medyo dedo sa while loop and break ky dko balo thanks manong chen sa help mo
+    setColor(6);//YELLOWWWWWWWWWWWWWW and "R" means literal raw string it means that every character in the string below is considered as string because sometime adding other character in cout it makes a other command like "\n", "\t\"  etc.
+    cout << R"(
+
+                 ."-,.__
+                                                                        ,'\
+                 `.     `.  ,             _.----.        ____         ,'  _\   ___    ___     ____
+              .--'  .._,'"-' `.       _,-'       `.     |    |  /`.   \,-'    |   \  /   |   |    \  |`.
+             .    .'         `'       \      __    \    '-.  | /   `.  ___    |    \/    |   '-.   \ |  |
+             `.   /          ,'        \.    \ \   |  __  |  |/    ,','_  `.  |          | __  |    \|  |
+               `  '--.   ,-"'            \    \/   /,' _`.|      ,' / / / /   |          ,' _`.|     |  |
+                `"`   |  \                \     ,-'/  /   \    ,'   | \/ / ,`.|         /  /   \  |     |
+                   -. \, |                 \    \ |   \_/  |   `-.  \    `'  /|  |    ||   \_/  | |\    |
+                    `--Y.'      ___.        \    \ \      /       `-.`.___,-' |  |\  /| \      /  | |   |
+                         \     L._, \        \    \ `.__,'|  |`-._    `|      |__| \/ |  `.__,'|  | |   |
+               _.,        `.   <  <\          \_.-'       |__|    `-._ |              '-.|     '-.| |   |
+             ,' '           `, `.   | \            ( `                `'                            '-._|
+          ../, `.            `  |    .\`.           \ \_
+         ,' ,..  .           _.,'    ||\l            )  '".              ___    _____         _____  ___    ___
+        , ,'   \           ,'.-.`-._,'  |           .  _._`.            (  _`\ (  _  )/'\_/`\(  _  )(  _`\ (  _`\
+      ,' /      \ \        `' ' `--/   | \          / /   ..\           | | ) || (_) ||     || (_) || ( (_)| (_(_)
+    .'  /        \ .         |\__ - _ ,'` `        / /     `.`.         | | | )|  _  || (_) ||  _  || |___ |  _)_
+    |  '          ..         `-...-"  |  `-'      / /        . `.       | |_) || | | || | | || | | || (_, )| (_( )
+    | /           |L__           |    |          / /          `. `.     (____/'(_) (_)(_) (_)(_) (_)(____/'(____/'
+   , /            .   .          |    |         / /             ` `      ___    _____  _      ___    _   _  _      _____  _____  _____  ___
+  / /          ,. ,`._ `-_       |    |  _   ,-' /               ` \    (  _`\ (  _  )( )    (  _`\ ( ) ( )( )    (  _  )(_   _)(  _  )|  _`\
+ / .           \"`_/. `-_ \_,.  ,'    +-' `-'  _,        ..,-.    \`.   | ( (_)| (_) || |    | ( (_)| | | || |    | (_) |  | |  | ( ) || (_) )
+.  '         .-f    ,'   `    '.       \__.---'     _   .'   '     \ \  | |  _ |  _  || |  _ | |  _ | | | || |  _ |  _  |  | |  | | | || ,  /
+' /          `.'    l     .' /          \..      ,_|/   `.  ,'`     L`  | (_( )| | | || |_( )| (_( )| (_) || |_( )| | | |  | |  | (_) || |\ \
+|'      _.-""` `.    \ _,'  `            \ `.___`.'"`-.  , |   |    | \ (____/'(_) (_)(____/'(____/'(_____)(____/'(_) (_)  (_)  (_____)(_) (_)
+||    ,'      `. `.   '       _,...._        `  |    `/ '  |   '     .|
+||  ,'          `. ;.,.---' ,'       `.   `.. `-'  .-' /_ .'    ;_   ||
+|| '              V      / /           `   | `   ,'   ,' '.    !  `. ||
+||/            _,-------7 '              . |  `-'    l         /    `||
+. |          ,' .-   ,' ||               | .-.        `.      .'     ||
+ `'        ,'    `".'    |               |    `.        '. -.'       `'
+          /      ,'      |               |,'    \-.._,.'/'
+          .     /        .               .       \    .''
+        .`.    |         `.             /         :_,'.'
+          \ `...\   _     ,'-.        .'         /_.-'
+           `-.__ `,  `'   .  _.>----''.  _  __  /
+                .'        /"'          |  "'   '_
+               /_|.-'\ ,".             '.'`__'-( \
+                 / ,"'"\,'               `/  `-.|"
+)" << endl;// ASCII ART mo poo thanks
+    setColor(7);// back to default font color in terminal
+
+     // declaration of datatypes
+    int level, moveType, attackerType1, attackerType2, enemyType1, enemyType2, movePower, attackerAttack, critical, foeDefense;
+    string effectivenessMsg;
+    char choice;
+    bool selfDestruct;
+    setColor()
+    cout << "THIS DAMAGE CALCULATOR IS BASED IF THE USER'S POKEMON ATTACKS FIRST ONLY. "<< endl;
+
+    while (true) {// while (true) means there is an error the user inputs wrong value then it will loop the question until the user puts correct value then it the "break" syntax which stops the loop and proceed to another question
+        cout << "Enter Pokemon level (1-100): ";
+        cin >> level;
+        if (level > 100 || level < 1) {
+            cout << "Error! Level exceeds 100. Please try again." << endl;
+            continue;// continue because of incorrect value results an error
+        } else {
+            break;// stops the loop
+        }
+    }
+
+    while (true) {// while (true) means there is an error the user inputs wrong value then it will loop the question until the user puts correct value then it the "break" syntax which stops the loop and proceed to another question
+        cout << "Enter attacker type 1: " << endl;
+        setColor(11);// cyan font color code
+        for (int i = 0; i < NUM_TYPES; i++) {// this for loop executes the NUM_TYPES index above until it will go 14 because 0 upto 14 = 15 numbers that is in line 6 represents the  constant 15x15 number 2d arrays intersection
+            cout << i << ". " << typeNames[i] << endl;// executes 1 upto 15 and in line number 7 represents the string from normal to dragon
+        }
+        setColor(7);// back to default font ccolor 
+        cin >> attackerType1;// user-input that goes to the  formula
+        if (attackerType1 < 0 || attackerType1 >= NUM_TYPES) {// error in user-input if the value is not within the range between 0 to 14
+            cout << "Error! Pokemon-Type is not on the list. Please try again." << endl;// error indicator cuz this code is user-friendly
+            continue;
+        } else {
+            break;
+        }
+    }
+
+    cout << "Enter attacker type 2 (Enter -1 if only one type): " << endl;
+    setColor(11);
+    for (int i = 0; i < NUM_TYPES; i++) {
+        cout << i << ". " << typeNames[i] << endl;
+    }
+
+    setColor(7);
+    while (true) {
+        cin >> attackerType2;
+        if (attackerType2 < -1 || attackerType2 >= NUM_TYPES) {
+            cout << "Error! Pokemon-Type is not on the list. Please try again." << endl;
+            continue;
+        } else {
+            break;
+        }
+    }
+    cout << "Is the move a self-destruct ? (Y/N): ";
+    cin >> choice;
+    if (choice == 'Y' || choice == 'y') {
+        selfDestruct = true;
+    } else {
+        selfDestruct = false;
+        cout << "Enter move type: " << endl;
+        setColor(11);
+        for (int i = 0; i < NUM_TYPES; i++) {
+        cout << i << ". " << typeNames[i] << endl;
+    }
+}
+    setColor(7);
+    cin >> moveType;
+
+    while (true) {
+        cout << "Enter move power: ";
+        cin >> movePower;
+        if (movePower > 999 || movePower < 0) {
+            cout << "Move power exceeds 999. Please try again." << endl;
+            continue;
+        } else {
+            break;
+        }
+    }
+
+    while (true) {
+        cout << "Enter attacker attack: ";
+        cin >> attackerAttack;
+        if (attackerAttack > 255 || attackerAttack < 1) {
+            cout << "Error: Attacker attack exceeds 255. Please try again." << endl;
+            continue;
+        } else {
+            break;
+        }
+    }
+
+    while (true) {
+        cout << "Enter critical chance (1 for normal or 2 for critical): ";
+        cin >> critical;
+        if (critical != 1 && critical != 2) {
+            cout << "Error: Critical chance must be either 1 or 2. Please try again" << endl;
+            continue;
+        } else {
+            break;
+        }
+    }
+
+    cout << "Enter enemy type 1: " << endl;
+    setColor(12); // red
+    for (int i = 0; i < NUM_TYPES; i++) {
+        cout << i << ". " << typeNames[i] << endl;
+    }
+    setColor(7);
+    while (true) {
+        cin >> enemyType1;
+        if (enemyType1 < 0 || enemyType1 >= NUM_TYPES) {
+            cout << "Error! Pokemon-Type is not on the list. Please try again." << endl;
+            continue;
+        } else {
+            break;
+        }
+    }
+
+    cout << "Enter enemy type 2 (Enter -1 if only one type): " << endl;
+    setColor(12); // red
+    for (int i = 0; i < NUM_TYPES; i++) {
+        cout << i << ". " << typeNames[i] << endl;
+    }
+    setColor(7);
+    while (true) {
+        cin >> enemyType2;
+        if (enemyType2 < -1 || enemyType2 >= NUM_TYPES) {
+            cout << "Error! Pokemon-Type is not on the list. Please try again." << endl;
+            continue;
+        } else {
+            break;
+        }
+    }
+
+    while (true) {
+        cout << "Enter foe defense: ";
+        cin >> foeDefense;
+        if (foeDefense > 255 || foeDefense < 1) {
+            cout << "Foe defense falls below 1. Please try again." << endl;
+            continue;
+        } else {
+            break;
+        }
+    }
+
+    dataType(level, attackerType1, attackerType2, moveType, movePower, attackerAttack, critical, enemyType1, enemyType2, foeDefense, effectivenessMsg, selfDestruct);
+    while (true){
+        cout << "Do you want to continue (Y/N)? ";
+        cin >> choice;
+        if (choice == 'N' || choice == 'n') {
+        return 0;
+        } else if (choice == 'Y' || choice == 'y') {
+       system("cls");
+       return main();
+       } else
+       {cout << "Try again using the correct input. " << endl;
+       continue;
+      }
+      }
+}
